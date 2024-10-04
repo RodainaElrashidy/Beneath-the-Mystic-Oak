@@ -33,8 +33,17 @@ public class GameManager : MonoBehaviour
 
     private void ToggleGameState(bool isPaused)
     {
+        if (isPaused)
+        {
+            _inputHandler.RegisterUIMapInputActions();
+        }
+        else
+        {
+            _inputHandler.RegisterBasicMovementInputActions();
+        }
+
         _playerMovement.enabled = !isPaused;
-        //Debug.Log("toggled");
+        Debug.Log("toggled" + isPaused);
     }
 
     private void OnDestroy()

@@ -9,7 +9,10 @@ public class InputHandler : MonoBehaviour
 
     public static InputHandler instance;
 
-    private PlayerControls playerControls;
+    /*[SerializeField] */private PlayerControls playerControls;
+
+    private InputActionMap basicMovement;
+    private InputActionMap uiMap;
 
     private Vector2 movementInput;
 
@@ -43,12 +46,15 @@ public class InputHandler : MonoBehaviour
         }
 
         playerControls = new PlayerControls();
+        basicMovement = playerControls.BasicMap;
+        uiMap = playerControls.UI;
     }
 
     private void OnEnable()
     {
         playerControls.Enable();
-        RegisterInputActions();
+        //RegisterInputActions();
+        RegisterBasicMovementInputActions();
     }
 
     void Start()
@@ -65,8 +71,38 @@ public class InputHandler : MonoBehaviour
     }
 
     //Method that handles subscribing event handlers to input actions.
-    private void RegisterInputActions()
+    //private void RegisterInputActions()
+    //{
+    //    //basicMovement.
+    //    playerControls.BasicMap.Movement.performed += value => movementInput = value.ReadValue<Vector2>();
+    //    playerControls.BasicMap.Movement.canceled += value => movementInput = Vector2.zero;
+
+    //    playerControls.BasicMap.Jump.performed += context => JumpTriggered = true;
+    //    playerControls.BasicMap.Jump.canceled += context => JumpTriggered = false;
+
+    //    playerControls.BasicMap.Sprint.performed += value => DashTriggered = true;
+    //    playerControls.BasicMap.Sprint.canceled += value => DashTriggered = false;
+
+    //    playerControls.BasicMap.PowerSwitch.performed += context => SwitchPower();
+
+    //    playerControls.BasicMap.Interact.performed += context => Interact();
+    //    playerControls.BasicMap.Interact.canceled += context => CancelInteract();
+
+    //    playerControls.BasicMap.Pause.performed += context => OnPauseStateChanged?.Invoke(true);
+    //    //problem bc both maps are enabled pause is triggered twice solve it
+    //    playerControls.UI.Resume.performed += context => OnPauseStateChanged?.Invoke(false);
+
+    //}
+
+
+    //make them public or have a method to handle that?
+    
+    public void RegisterBasicMovementInputActions()
     {
+
+        basicMovement.Enable();
+        uiMap.Disable();
+
         playerControls.BasicMap.Movement.performed += value => movementInput = value.ReadValue<Vector2>();
         playerControls.BasicMap.Movement.canceled += value => movementInput = Vector2.zero;
 
@@ -82,9 +118,19 @@ public class InputHandler : MonoBehaviour
         playerControls.BasicMap.Interact.canceled += context => CancelInteract();
 
         playerControls.BasicMap.Pause.performed += context => OnPauseStateChanged?.Invoke(true);
+
+    }
+
+    public void RegisterUIMapInputActions()
+    {
+
+        basicMovement.Disable();
+        uiMap.Enable();
+
         playerControls.UI.Resume.performed += context => OnPauseStateChanged?.Invoke(false);
 
     }
+
 
     public void HandleMovement()
     {
