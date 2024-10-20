@@ -15,22 +15,28 @@ public class PlayerMovement : MonoBehaviour
     [Header("Jump")]
     [SerializeField] private float jumpHeight = 1f;
     [SerializeField] private float jumpBufferTime = 0.2f;
+    [SerializeField] private float fallForce = 10;
 
     [Header("Dash")]
     [SerializeField] private float dashPower = 24f;
     [SerializeField] private float dashTime = 0.2f;
     [SerializeField] private float dashCooldown = 1f;
+    [SerializeField] ParticleSystem _particleSystem;
+    [SerializeField] SpriteRenderer _spriteRenderer;
 
     private InputHandler _inputHandler;
     private PlatformCheck _platformCheck;
 
     private float horizontalInput;
-    private float speed = 0f;
     private float jumpBufferCounter;
 
     private bool isFacingRight = true;
     private bool canDash = true;
     private bool isDashing = false;
+    private bool isJumping = false;
+    private bool canJumpAfterDash = false;
+
+    public bool IsJumping { get => isJumping;}
 
     #endregion
 
@@ -59,6 +65,7 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        //no action allowed while dashing
         if (isDashing)
         {
             return;
@@ -68,11 +75,20 @@ public class PlayerMovement : MonoBehaviour
 
         ApplyMovement();
 
-        if (jumpBufferCounter > 0 && _platformCheck.canJump())
+        // Apply jump when jump buffer is active and player can jump
+        //or when jump is triggered whithout jumpBuffer and just finished a dash
+        if ((jumpBufferCounter > 0 && _platformCheck.CanJump()) || (_inputHandler.JumpTriggered && canJumpAfterDash))
         {
             ApplyJump();
         }
 
+        // Apply fall force when the jump is released early 
+        if (!_inputHandler.JumpTriggered && isJumping && _rigidbody2D.velocity.y > 0f)
+        {
+            _rigidbody2D.AddForce(Vector2.down * fallForce, ForceMode2D.Force);
+        }
+
+        // Update jump buffer counter
         if (_inputHandler.JumpTriggered)
         {
             jumpBufferCounter = jumpBufferTime;
@@ -82,20 +98,27 @@ public class PlayerMovement : MonoBehaviour
             jumpBufferCounter -= Time.deltaTime;
         }
 
+        //Handle Dash
         if (_inputHandler.DashTriggered && canDash)
         {
             StartCoroutine(Dash());
+        }
+
+        if (_platformCheck.CanJump() && isJumping)
+        {
+            isJumping = false;  // Reset isJumping when player lands
         }
     }
 
     public void ApplyMovement()
     {
-        speed = baseSpeed;
-        _rigidbody2D.velocity = new Vector2(horizontalInput * speed, _rigidbody2D.velocity.y);
+        _rigidbody2D.velocity = new Vector2(horizontalInput * baseSpeed, _rigidbody2D.velocity.y);
     }
 
     public void ApplyJump()
     {
+        isJumping = true;
+
         //_rigidbody2D.AddForce(Vector2.up * jumpHeight, ForceMode2D.Impulse);
         _rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpHeight);
 
@@ -121,6 +144,8 @@ public class PlayerMovement : MonoBehaviour
     {
         canDash = false;
         isDashing = true;
+        _particleSystem.Play();
+        _spriteRenderer.enabled = false;
 
         float ogGravity = _rigidbody2D.gravityScale;
         _rigidbody2D.gravityScale = 0f;
@@ -131,8 +156,15 @@ public class PlayerMovement : MonoBehaviour
 
         _rigidbody2D.gravityScale = ogGravity;
         isDashing = false;
+        _particleSystem.Stop();
+        _spriteRenderer.enabled = true;
+        canJumpAfterDash = true;
 
-        yield return new WaitForSeconds(dashCooldown);
+        yield return new WaitForSeconds(dashCooldown / 4);
+
+        canJumpAfterDash = false; 
+
+        yield return new WaitForSeconds(dashCooldown - (dashCooldown / 4));
 
         canDash = true;
     }

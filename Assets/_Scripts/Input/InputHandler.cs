@@ -9,7 +9,7 @@ public class InputHandler : MonoBehaviour
 
     public static InputHandler instance;
 
-    /*[SerializeField] */private PlayerControls playerControls;
+    private PlayerControls playerControls;
 
     private InputActionMap basicMovement;
     private InputActionMap uiMap;
@@ -17,6 +17,8 @@ public class InputHandler : MonoBehaviour
     private Vector2 movementInput;
 
     public event Action<bool> OnPauseStateChanged;
+    public event Action OnPowerSwitched;
+    public event Action OnPowerFire;
 
     #endregion
 
@@ -27,11 +29,13 @@ public class InputHandler : MonoBehaviour
     public bool CanMove { get; set; }
     public bool JumpTriggered { get; private set; }
     public bool DashTriggered { get; private set; }
-    public bool IsJumping { get; set; }
-    public bool PlayerInteracted { get; set; }
-    public bool GreenPower { get; set; }
-    public bool BluePower { get; set; }
-    public bool IsPaused { get; set; }
+
+    //public bool IsJumping { get; set; }
+    public bool PlayerFire { get; private set; }
+
+    //public bool GreenPower { get; set; }
+    //public bool BluePower { get; set; }
+    //public bool IsPaused { get; set; }
 
     #endregion
 
@@ -61,13 +65,13 @@ public class InputHandler : MonoBehaviour
     {
         CanMove = true;
         JumpTriggered = false;
-        IsJumping = false;
-        PlayerInteracted = false;
+       // IsJumping = false;
+        //PlayerFire = false;
 
-        GreenPower = true;
-        BluePower = false;
+        //GreenPower = true;
+        //BluePower = false;
 
-        IsPaused = false;
+        //IsPaused = false;
     }
 
     //Method that handles subscribing event handlers to input actions.
@@ -109,13 +113,18 @@ public class InputHandler : MonoBehaviour
         playerControls.BasicMap.Jump.performed += context => JumpTriggered = true;
         playerControls.BasicMap.Jump.canceled += context => JumpTriggered = false;
 
-        playerControls.BasicMap.Sprint.performed += value => DashTriggered = true;
-        playerControls.BasicMap.Sprint.canceled += value => DashTriggered = false;
+        playerControls.BasicMap.Sprint.performed += context => DashTriggered = true;
+        playerControls.BasicMap.Sprint.canceled += context => DashTriggered = false;
 
-        playerControls.BasicMap.PowerSwitch.performed += context => SwitchPower();
+        //playerControls.BasicMap.PowerSwitch.performed += context => SwitchPower();
+        playerControls.BasicMap.PowerSwitch.performed += context => OnPowerSwitched?.Invoke();
 
-        playerControls.BasicMap.Interact.performed += context => Interact();
-        playerControls.BasicMap.Interact.canceled += context => CancelInteract();
+        playerControls.BasicMap.Interact.performed += context => PlayerFire = true;
+        playerControls.BasicMap.Interact.performed += context => OnPowerFire?.Invoke();
+        playerControls.BasicMap.Interact.canceled += context => PlayerFire = false;
+
+        //playerControls.BasicMap.Interact.performed += context => Interact();
+        //playerControls.BasicMap.Interact.canceled += context => CancelInteract();
 
         playerControls.BasicMap.Pause.performed += context => OnPauseStateChanged?.Invoke(true);
 
@@ -138,21 +147,21 @@ public class InputHandler : MonoBehaviour
         VerticalInput = movementInput.y;
     }
 
-    private void Interact()
-    {
-        PlayerInteracted = true;
-    }
+    //private void Interact()
+    //{
+    //    PlayerFire = true;
+    //}
 
-    private void CancelInteract()
-    {
-        PlayerInteracted = false;
-    }
+    //private void CancelInteract()
+    //{
+    //    PlayerFire = false;
+    //}
 
-    private void SwitchPower()
-    {
-        GreenPower = !GreenPower;
-        BluePower = !BluePower;
-    }
+    //private void SwitchPower()
+    //{
+    //    GreenPower = !GreenPower;
+    //    BluePower = !BluePower;
+    //}
 
     private void OnDisable()
     {

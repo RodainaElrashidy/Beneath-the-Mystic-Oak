@@ -56,7 +56,7 @@ public class PlatformCheck : MonoBehaviour
         return Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
     }
 
-    public bool canJump()
+    public bool CanJump()
     {
         return (IsGrounded() || coyoteCounter > 0);
     }
